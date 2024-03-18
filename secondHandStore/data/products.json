@@ -1,1 +1,29 @@
-[{"id":2,"name":"refrigerator","category":"electricalAppliances","condition":"good","price":1200,"ownerName":"shimon levi","ownerTelephon":89775487},{"id":3,"name":"car-honda","category":"vehicles","condition":"used","price":5400,"ownerName":"noam cohen","ownerTelephon":32548754},{"id":4,"name":"organ","category":"vehicles","condition":"good","price":"4000","ownerName":"yael","ownerTelephon":"21454748"}]
+[
+    {
+        "id": 2,
+        "name": "refrigerator",
+        "category": "electricalAppliances",
+        "condition": "good",
+        "price": 1200,
+        "ownerName": "shimon levi",
+        "ownerTelephon": 89775487
+    },
+    {
+        "id": 3,
+        "name": "car-honda",
+        "category": "vehicles",
+        "condition": "used",
+        "price": 5400,
+        "ownerName": "noam cohen",
+        "ownerTelephon": 32548754
+    },
+    {
+        "id": 4,
+        "name": "organ",
+        "category": "vehicles",
+        "condition": "good",
+        "price": "4000",
+        "ownerName": "yael",
+        "ownerTelephon": "21454748"
+    }
+]

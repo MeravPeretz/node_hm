@@ -1,117 +1,111 @@
-const fs = require('fs')
-    async function readProducts () {
-        let products=await fs.promises.readFile("././data/products.json");
-        products = await JSON.parse(products);
-        // await console.log(products);
-        //   const sortedArray=await productsArray.toSorted((a, b) => {
-        //     return a.name.localeCompare(b.name);
-        //    });
-          return products;
-      };
-      async function writeProducts(products){
-       return fs.promises.writeFile( "././data/products.json",JSON.stringify(products))
-
-      }
+const  mongoose = require('mongoose');
+const Product=require('../models/product');
+const Category=require('../models/category');
 module.exports={
-      get: async function(req, res){
-        const { search, category, minPrice, maxPrice } = req.query;
+      get: async function (req, res) {
+        Product.find()
+        .then((product) => {
+          res.status(200).send( product )
+      }).catch(() => {
+          res.status(500).send("error!")
+      });
+      },
+      getById: async function (req, res) {
+        Product.findById(req.params.id)
+        .then((product) => {
+          if(product)
+            res.status(200).send(product);
+          else
+          res.status(404).send("product not found!");
+      }).catch(() => {
+          res.status(500).send("product not found!")
+      });
+      },
+    
+      post: async function (req, res) {
+        const { name, category, condition, price, ownerName,ownerTelephon } = req.body;
+        if (!name || !category || !condition || !price || !ownerName || !ownerTelephon) {
+          res.status(500);
+          res.send("Invalid model");
+          return;
+        }
+        const categoryObj=await Category.findOne({"name":category});
+        if(!categoryObj){
+          res.status(500).send("there is not "+category+" category!");
+          return;
+        }
+        const prod=new Product({
+          _id:new mongoose.Types.ObjectId(),
+          name,
+          category_id:categoryObj._id,
+          condition,
+          price,
+          ownerName,
+          ownerTelephon
+        }).save()
+            .then(() => { res.status(200).send('add successful'); })
+            .catch(()=>{res.status(500).send("internal server error!")});
+      },
+    
+      put: async function (req, res) {
         try {
-            productsArray= await readProducts();
-            const result = await productsArray.filter(
-              (p) =>
-                (!search || p.name.includes(search)) &&
-                (!category || p.category === category) &&
-                (!minPrice || p.price >= +minPrice) &&
-                (!maxPrice || p.price <= +maxPrice)
-            );
-            res.send(result);
+          const { name } = req.body;
+          const { id } = req.params;
+          const category = await Categories.findOneAndUpdate( { "_id" :id },
+          { $set: { "name" : name } })
+          .then(() => { res.send('update successful'); })
+          .catch( ()=>{      
+            res.status(404);
+            res.send("category not exists");
+          })
         } catch (error) {
           res.status(500);
           res.send();
         }
       },
-      
-      getById:async function(req, res){
-        try {
-            productsArray= await readProducts();
-            const product = productsArray.find((item) => item.id === +req.params.id);
-            if(!product)
-                res.status(404).send("not valid product");
-            res.send(product);
-        } catch (error) {
-          res.status(500);
-          res.send();
-        }
+    
+      delete: async function (req, res) {
+          Categories.deleteOne({"_id":req.params.id})
+            .then(() => { res.send('delete successful'); })
+            .catch(()=>res.status(404).send("not found!"));
       },
-      
-      post:async function(req, res){
-        try {
-          const { name, category, condition, price, ownerName,ownerTelephon } = req.body;
-          if (!name || !category || !condition || !price || !ownerName || !ownerTelephon) {
-            res.status(500);
-            res.send("Invalid model");
-            return;
-          }
-          productsArray= await readProducts();
-          console.log("after read");
-
-          const id = await Math.max(...productsArray.map((p) => p.id)) + 1;
-          console.log(id);
-          const newProduct = { id, name, category, condition, price, ownerName,ownerTelephon };
-          console.log(newProduct);
-          writeProducts([...productsArray, newProduct])
-          .then(() =>{ res.send( 'add successful');}); 
-
-        } catch (error) {
-          res.status(500);
-          res.send();
-        }
-      },
+     
       
       put:async function(req, res){
         try {
-          const{ name, category, condition, price, ownerName,ownerTelephon } = req.body;
+          let{ name, category, condition, price, ownerName,ownerTelephon } = req.body;
           const { id } = req.params;
-      
-          let productsArray=await readProducts();
-          const product =await productsArray.find((p) => p.id === +id);
-            if (!product) {
+          const product=Product.findById(id).catch(()=>res.status(404).send("not found!"));
+          let category_id=0;  
+          if(category){
+              const categoryObj=await Category.findOne({"name":category});
+              if(!categoryObj){
+                res.status(500).send("there is not "+category+" category!");
+                return;
+              }
+              category_id=categoryObj._id;
+          }
+          name = name || product.name;
+            category = category_id || product.category;
+            condition = condition || product.condition;
+            price = price || product.price;
+            ownerName = ownerName || product.ownerName;
+            ownerTelephon=ownerTelephon || product.ownerTelephon;
+            Product.updateOne({"_id":id},{ $set: { "name" : name ,"category":category_id,
+              "condition":condition,"price":price,"ownerName":ownerName,"ownerTelephon":ownerTelephon}})
+            .then(() =>{ res.send( 'update successful');})
+            .catch( ()=>{      
               res.status(404);
-              res.send("Product not exists");
-              return;
-            }
-      
-            product.name = name || product.name;
-            product.category = category || product.category;
-            product.condition = condition || product.condition;
-            product.price = price || product.price;
-            product.ownerName = ownerName || product.ownerName;
-            product.ownerTelephon=ownerTelephon || product.ownerTelephon;
-            const updatedProductsArray = productsArray.map((p) =>
-              p.id === +id ? product : p
-            );
-      
-            writeProducts(updatedProductsArray)
-            .then(() =>{ res.send( 'update successful');}); 
-
+              res.send("product not exists");
+            })
         } catch (error) {
           res.status(500);
           res.send();
         }
-      },
-      
-      delete:async function(req, res){
-        try {
-            productsArray=await readProducts();
-            const products =await productsArray.filter(
-              (item) => item.id !== +req.params.id
-            );
-            writeProducts(products)
-            .then(() =>{ res.send( 'delete successful');}); 
-
-        } catch (error) {
-          res.status(500);
-          res.send();
-        }
-      },
+      },     
+      delete: async function (req, res) {
+        Product.deleteOne({"_id":req.params.id})
+          .then(() => { res.send('delete successful'); })
+          .catch(()=>res.status(404).send("not found!"));
+    },
 }

@@ -1,1 +1,42 @@
-[{"id":0,"name":"electricalAppliances"},{"id":1,"name":"musicalInstruments"},{"id":2,"name":"vehicles"},{"id":3,"name":"clothes"},{"id":4,"name":"furniture"},{"id":5,"name":"furniture"},{"id":6,"name":"furniture"},{"id":9,"name":"furniture"},{"id":10,"name":"organ"},{"id":11,"name":"organ"}]
+[
+    {
+        "id": 0,
+        "name": "electricalAppliances"
+    },
+    {
+        "id": 1,
+        "name": "musicalInstruments"
+    },
+    {
+        "id": 2,
+        "name": "vehicles"
+    },
+    {
+        "id": 3,
+        "name": "clothes"
+    },
+    {
+        "id": 4,
+        "name": "furniture"
+    },
+    {
+        "id": 5,
+        "name": "furniture"
+    },
+    {
+        "id": 6,
+        "name": "furniture"
+    },
+    {
+        "id": 9,
+        "name": "furniture"
+    },
+    {
+        "id": 10,
+        "name": "organ"
+    },
+    {
+        "id": 11,
+        "name": "organ"
+    }
+]

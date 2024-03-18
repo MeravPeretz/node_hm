@@ -3,70 +3,66 @@ const app = Router();
 const fs = require('fs').promises;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-let users;
-const save =async (user) =>{
-    const fs = require('fs').promises;
-    users.push(user);
-    fs.writeFile("./data/users.json", JSON.stringify(users));
-}
-
-const loadData =async  (email) => {
-    users = await fs.readFile('./data/users.json');
-    users = await JSON.parse(users);
-}
+const User=require('../models/user');
+const mongoose=require('mongoose');
 module.exports={
     signUp: async function(req, res){
         try {
             // Get user input
-            const { first_name, last_name, email, password, user_id } = req.body
-            if (!(email && password && first_name && last_name && user_id)) {
-                res.status(400).send("All input is required");
+            const { first_name, last_name, email, password } = req.body
+            if (!(email && password && first_name && last_name )) {
+                return res.status(400).send("All input is required");
             }
-            await loadData();
-            const oldUser = users.find(u=>u.email===email);
+            const oldUser =await  User.findOne({"password":password,"first_name":first_name})
             if (oldUser) {
-                return res.status(409).send("User Already Exist. Please ")
+                return res.status(409).send("User Already Exist "+oldUser);
             }
             encryptedPassword = await bcryptjs.hash(password, 10);
-            const token = jwt.sign({ user_id:user_id, email },
+            const token = jwt.sign({ first_name:first_name, password },
                 "" + process.env.TOKEN_KEY, {
                     expiresIn: "2h",
                 }
             );
-
-            const user={first_name:first_name,last_name:last_name,email:email,password:encryptedPassword,user_id:user_id,token:token}
-            save(user);
-            res.status(201).json(user);
+            const user=new User(
+            { first_name,last_name,email,encryptedPassword,token})
+            .save()
+            .then( res.status(201).json(user))
+           .catch(res.status(500).send("internal error!"));
         } catch (err) {
-            console.log(err);
-        }
-        // Our register logic ends here
+            res.status(500).send(err)        }
     },
-    login:async function(req, res){
+    login: async function(req, res) {
         try {
-            const { first_name,email, password } = req.body;
-            if (!(email && password && first_name)) {
-                res.status(400).send("All input is required");
+            const { first_name, password } = req.body;
+            if (!(password && first_name)) {
+                return res.status(400).send("All input is required");
             }
-            await loadData();
-            const user = users.find(u=>u.email===email);
-            console.log(user);
-            console.log(await bcryptjs.compare(password, user.password));
-            if (user && (await bcryptjs.compare(password, user.password))) {
-                const token = jwt.sign({ user_id: user._id, first_name },
-                   " " + process.env.TOKEN_KEY, {
-                        expiresIn: "2h",
+    
+            const user = await User.findOne({ "password": password});
+            
+            if (user) {
+                if (password && user.password) {
+                    const passwordMatch = await bcryptjs.compare(password, user.password);
+                    if (passwordMatch) {
+                        const token = jwt.sign({ first_name: first_name }, process.env.TOKEN_KEY, {
+                            expiresIn: "2h",
+                        });
+                        user.token = token;
+                        return res.status(200).json(user);
+                    } else {
+                        return res.status(400).send("Invalid Credentials");
                     }
-                );
-                user.token = token;
-                // user
-                res.status(200).json(user);
+                } else {
+                    return res.status(400).send("Invalid password format");
+                }
+            } else {
+                return res.status(404).send("User not found");
             }
-            else
-                res.status(400).send("Invalid Credentials");
         } catch (err) {
-           
-            console.log(err);
+            console.error(err);
+            return res.status(500).send("Internal error!");
         }
     }
+    
+    
 }
